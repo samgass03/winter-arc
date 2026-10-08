@@ -1,7 +1,7 @@
 /* Winter Arc Gym – Service Worker
    Die App selbst (index.html) wird immer zuerst frisch geladen,
    damit Updates sofort ankommen. Offline gibt es die letzte Version. */
-const CACHE = 'winter-arc-v5-1';
+const CACHE = 'winter-arc-v5-2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './maskable-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
