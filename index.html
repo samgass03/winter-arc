@@ -43,6 +43,7 @@
 *,*::before,*::after{box-sizing:border-box}
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+@supports (overflow:clip){html,body{overflow-x:clip}}
 body.lock{overflow:hidden}
 button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;transition:transform .35s var(--spring)}
 button:active{transform:scale(.95)}
@@ -346,7 +347,7 @@ textarea.paste{width:100%;min-height:90px;border-radius:16px;border:1px solid va
 .danger{color:var(--ember)}
 
 /* Floating glass nav */
-.nav{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);transform:translateX(-50%);z-index:15;width:min(340px,calc(100% - 40px));height:var(--nav);border-radius:999px;padding:5px;
+.nav{position:fixed;left:0;right:0;margin:0 auto;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:15;width:min(340px,calc(100% - 40px));height:var(--nav);border-radius:999px;padding:5px;
   background:color-mix(in srgb,var(--glass-strong) 70%,transparent);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
   border:1px solid var(--glass-b);box-shadow:0 16px 36px -14px rgba(14,30,60,.35),inset 0 1px 0 var(--glass-hi)}
 .nav .in{position:relative;display:grid;grid-template-columns:repeat(3,1fr);height:100%}
@@ -453,6 +454,14 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 .calW{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
 .calW input{width:96px;border:1px solid var(--glass-b);background:var(--sunk);border-radius:999px;padding:7px 12px;font:inherit;font-size:16px;font-weight:700;color:var(--ink)}
 .cd .wdot{position:absolute;top:4px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--n-prog)}
+
+.modeSw{display:inline-flex;align-items:center;gap:7px;border:none;background:none;padding:4px 0;font-weight:700;font-size:.84rem;color:var(--muted);transition:color .3s}
+.modeSw svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.modeSw i{position:relative;width:36px;height:22px;border-radius:999px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--hair);transition:background .35s}
+.modeSw i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:linear-gradient(180deg,#fff,#eef0f4);box-shadow:0 2px 5px rgba(0,0,0,.22);transition:transform .5s var(--spring)}
+.modeSw[aria-checked="true"]{color:var(--ink)}
+.modeSw[aria-checked="true"] i{background:var(--c-c)}
+.modeSw[aria-checked="true"] i::after{transform:translateX(14px)}
 </style>
 </head>
 <body>
@@ -488,7 +497,7 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
     <nav class="seg" role="tablist" id="seg" aria-label="Trainingstag"></nav>
     <div class="lbl"><h3>Aufwärmen</h3><button id="warmHow">So geht's</button></div>
     <div class="chips" id="warm"></div>
-    <div class="lbl"><h3>Übungen</h3></div>
+    <div class="lbl"><h3>Übungen</h3><button class="modeSw" id="modeSw" role="switch" aria-checked="false" aria-label="Zuhause-Modus mit Kurzhanteln"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6.5 8 6.5M6.5 9.5V19h11V9.5"/></svg><span>Zuhause</span><i></i></button></div>
     <div id="exList"></div>
     <button class="cta" id="finish" disabled>Training abschließen</button>
     <button class="ghost" id="reset">Tag zurücksetzen</button>
@@ -800,6 +809,80 @@ const FIGS={
   props:rect(20,144,165,6,3,'pad2'),
   A:{hip:[118,114],t:-163,ho:-14,arm:{a:90,b:90},leg:{a:90,b:0},arm2:{a:92,b:88},leg2:{a:88,b:0}},
   B:{hip:[118,114],t:-163,ho:-14,arm:{a:-176,b:-178},leg:{a:-4,b:-2},arm2:{a:92,b:88},leg2:{a:88,b:0}}}
+,
+ dbrow:{hi:['arm'],
+  props:rect(118,82,52,7,3,'pad2')+line(126,89,126,150)+line(164,89,164,150),
+  A:{hip:[74,92],t:-34,ho:-6,leg:{a:96,b:92},leg2:{a:120,b:96},arm2:{to:[132,84],bend:1},arm:{a:92,b:90}},
+  B:{hip:[74,92],t:-34,ho:-6,leg:{a:96,b:92},leg2:{a:120,b:96},arm2:{to:[132,84],bend:1},arm:{a:172,b:92}},
+  dyn:j=>db(j.ha)},
+ pullover:{hi:['arm'],
+  props:rect(10,144,180,6,3,'pad2'),
+  A:{hip:[118,134],t:180,ho:2,leg:{a:-48,b:56},arm:{a:-90,b:-90}},
+  B:{hip:[118,134],t:180,ho:2,leg:{a:-48,b:56},arm:{a:-168,b:-172}},
+  dyn:j=>db(j.ha)},
+ proney:{hi:['arm','torso'],
+  props:rect(10,144,180,6,3,'pad2'),
+  A:{hip:[118,139],t:180,ho:0,leg:{a:2,b:0},arm:{a:178,b:180}},
+  B:{hip:[118,139],t:182,ho:-4,leg:{a:2,b:0},arm:{a:194,b:196}},
+  dyn:j=>`<rect class="wt8" x="${(j.ha[0]-6).toFixed(1)}" y="${(j.ha[1]-3).toFixed(1)}" width="10" height="6" rx="2"/>`},
+ wallcurl:{hi:['arm'],
+  props:line(66,14,66,150,'eq3'),
+  A:{hip:[80,98],t:-90,leg:{a:84,b:92},leg2:{a:96,b:88},arm:{a:92,b:88}},
+  B:{hip:[80,98],t:-90,leg:{a:84,b:92},leg2:{a:96,b:88},arm:{a:92,b:-72}},
+  dyn:j=>db(j.ha)},
+ wallham:{hi:['arm'],
+  props:line(66,14,66,150,'eq3'),
+  A:{hip:[80,98],t:-90,leg:{a:84,b:92},leg2:{a:96,b:88},arm:{a:92,b:88}},
+  B:{hip:[80,98],t:-90,leg:{a:84,b:92},leg2:{a:96,b:88},arm:{a:92,b:-68}},
+  dyn:j=>`<rect class="wt8" x="${(j.ha[0]-4).toFixed(1)}" y="${(j.ha[1]-8).toFixed(1)}" width="8" height="16" rx="3"/>`},
+ chairohp:{hi:['arm'],
+  props:rect(58,114,46,7,3)+line(62,114,58,50,'eq3')+line(62,121,62,150)+line(100,121,100,150),
+  A:{hip:[74,112],t:-92,leg:{a:2,b:90},arm:{to:[84,60],bend:1}},
+  B:{hip:[74,112],t:-92,leg:{a:2,b:90},arm:{to:[77,13],bend:1}},
+  dyn:j=>db(j.ha)},
+ floorpress:{hi:['arm'],
+  props:rect(10,144,180,6,3,'pad2'),
+  A:{hip:[118,134],t:180,ho:2,leg:{a:-48,b:56},arm:{a:22,b:-90}},
+  B:{hip:[118,134],t:180,ho:2,leg:{a:-48,b:56},arm:{a:-90,b:-90}},
+  dyn:j=>db(j.ha)},
+ skull:{hi:['arm'],
+  props:rect(10,144,180,6,3,'pad2'),
+  A:{hip:[118,134],t:180,ho:2,leg:{a:-48,b:56},arm:{a:-98,b:-98}},
+  B:{hip:[118,134],t:180,ho:2,leg:{a:-48,b:56},arm:{a:-98,b:-205}},
+  dyn:j=>db(j.ha)},
+ rflysup:{hi:['arm'],
+  props:rect(118,82,52,7,3,'pad2')+line(126,89,126,150)+line(164,89,164,150),
+  A:{hip:[74,92],t:-34,ho:-6,leg:{a:96,b:92},leg2:{a:120,b:96},arm2:{to:[132,84],bend:1},arm:{a:92,b:94,s:1}},
+  B:{hip:[74,92],t:-34,ho:-6,leg:{a:96,b:92},leg2:{a:120,b:96},arm2:{to:[132,84],bend:1},arm:{a:76,b:74,s:.34}},
+  dyn:j=>db(j.ha)},
+ chairsq:{hi:['leg'],
+  props:rect(36,112,40,7,3)+line(40,119,40,150)+line(72,119,72,150),
+  A:{hip:[90,82],t:-90,leg:{to:[100,150],bend:-1},leg2:{to:[104,150],bend:-1},arm:{a:70,b:-80}},
+  B:{hip:[70,108],t:-62,leg:{to:[100,150],bend:-1},leg2:{to:[104,150],bend:-1},arm:{a:40,b:-60}},
+  dyn:j=>`<rect class="wt8" x="${(j.ha[0]-5).toFixed(1)}" y="${(j.ha[1]-9).toFixed(1)}" width="10" height="18" rx="3"/>`},
+ revlunge:{hi:['leg'],
+  props:'',
+  A:{hip:[100,84],t:-90,leg:{to:[106,150],bend:-1},leg2:{to:[98,150],bend:-1},arm:{a:94,b:90}},
+  B:{hip:[94,110],t:-88,leg:{to:[112,150],bend:-1},leg2:{to:[56,148],bend:1},arm:{a:94,b:90}},
+  dyn:j=>db(j.ha)},
+ bridge:{hi:['leg','torso'],
+  props:rect(10,144,180,6,3,'pad2'),
+  A:{hip:[104,138],t:180,ho:2,leg:{to:[134,146],bend:-1},arm:{a:4,b:0}},
+  B:{hip:[104,116],t:153,ho:12,leg:{to:[134,146],bend:-1},arm:{a:22,b:20}},
+  dyn:j=>`<rect class="wt8" x="${(j.hip[0]-9).toFixed(1)}" y="${(j.hip[1]-10).toFixed(1)}" width="18" height="8" rx="3"/>`}
+,
+ pushup:{hi:['arm','torso'],
+  props:rect(146,104,50,8,3)+line(152,112,152,150)+line(190,112,190,150),
+  A:{hip:[87.4,100.6],t:-45,ho:0,leg:{to:[40,148],bend:1},arm:{to:[158,105],bend:-1}},
+  B:{hip:[94.9,109.6],t:-35,ho:0,leg:{to:[40,148],bend:1},arm:{to:[158,105],bend:-1}}},
+ plank:{hi:['torso'],
+  props:rect(10,144,180,6,3,'pad2'),
+  A:{hip:[105.6,133.5],t:-11.6,ho:0,leg:{to:[40,146],bend:1},arm:{a:90,b:0}},
+  B:{hip:[105.6,130.5],t:-12.6,ho:0,leg:{to:[40,146],bend:1},arm:{a:90,b:0}}},
+ wallsit:{hi:['leg'],
+  props:line(64,10,64,150,'eq3'),
+  A:{hip:[74,88],t:-90,ho:0,leg:{to:[104,150],bend:-1},leg2:{to:[108,150],bend:-1},arm:{a:84,b:80}},
+  B:{hip:[74,114],t:-90,ho:0,leg:{to:[106,150],bend:-1},leg2:{to:[110,150],bend:-1},arm:{a:40,b:20}}}
 };
 function figSVG(key){return `<svg viewBox="0 0 200 160" class="fig" data-fig="${key}" aria-hidden="true"><path class="floor" d="M0 150.5H200"/>${FIGS[key].props}<g class="live"></g></svg>`;}
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
@@ -838,21 +921,49 @@ const WARM=[
  {n:'Seitstütz',fig:'sideplank',m:'Seitliche Rumpfmuskeln',steps:['Leg dich auf die Seite, der Ellbogen ist unter der Schulter.','Heb die Hüfte an, bis dein Körper eine gerade Linie bildet.','8–10 Sekunden halten, absetzen. Pro Seite 3–5 Mal.'],tip:'Zu schwer? Mach ihn mit angewinkelten Knien.'},
  {n:'Bird Dog',fig:'birddog',m:'Rückenstrecker, Po, Schultern',steps:['Vierfüßlerstand: Hände unter den Schultern, Knie unter der Hüfte.','Streck einen Arm nach vorne und das gegenüberliegende Bein nach hinten.','8–10 Sekunden halten, der Rücken bleibt gerade. Seiten wechseln.'],tip:'Stell dir vor, auf deinem Rücken steht ein Glas Wasser. Nichts verschütten.'}
 ];
+const HOME=[
+ {id:'a',kp:'ha-',emoji:'🦍',name:'Rücken & Bizeps',short:'Rücken',ex:[
+  {id:'row',n:'Einarmiges Rudern, abgestützt',fig:'dbrow',s:4,r:'10–12 pro Seite',m:'Breiter Rücken, mittlerer Rücken, Bizeps',steps:['Stell dich vor einen Tisch oder eine stabile Stuhllehne und stütz dich mit einer Hand ab. Füße in Schrittstellung.','Rücken gerade, die Hantel hängt mit gestrecktem Arm unter der Schulter.','Zieh die Hantel zur Hüfte, der Ellbogen streift am Körper vorbei. Langsam ablassen, dann Seite wechseln.'],tip:'Die Stützhand nimmt deinem unteren Rücken die Last ab. Nicht mitdrehen und kein Rundrücken.'},
+  {id:'pull',n:'Pullover am Boden',fig:'pullover',s:3,r:'12',m:'Breiter Rücken, Brust',steps:['Leg dich auf den Rücken, Knie angewinkelt, Füße am Boden.','Halte eine Hantel mit beiden Händen gestreckt über der Brust.','Führ sie langsam hinter den Kopf Richtung Boden, nur so weit es angenehm ist. Dann zurück über die Brust.'],tip:'Der Boden ist deine Sicherung: Der untere Rücken bleibt flach liegen, die Rippen bleiben unten.'},
+  {id:'yr',n:'Y-Heben in Bauchlage',fig:'proney',s:3,r:'12',m:'Oberer Rücken, hintere Schulter',bw:true,steps:['Leg dich auf den Bauch, Stirn auf ein Handtuch, Arme in Y-Form nach vorne. Daumen zeigen nach oben.','Spann den Po leicht an.','Heb die Arme ein paar Zentimeter an, 2 Sekunden halten, langsam ablegen.'],tip:'Nur die Arme heben, nicht den Oberkörper aufbäumen. Zu leicht? Dann eine Wasserflasche in jede Hand.'},
+  {id:'plank',n:'Unterarmstütz',fig:'plank',s:3,r:'20–40 Sek.',rr:'20–40s',m:'Bauch, tiefe Rumpfmuskeln, Rücken',bw:true,steps:['Unterarme auf den Boden, Ellbogen unter den Schultern.','Heb den Körper auf Zehenspitzen, Kopf bis Fersen eine gerade Linie.','Bauch und Po fest anspannen, ruhig weiteratmen und halten.'],tip:'Nicht durchhängen lassen. Zu schwer? Mach ihn auf den Knien, das ist genauso wertvoll.'},
+  {id:'curl',n:'Bizeps-Curls an der Wand',fig:'wallcurl',s:3,r:'10–12',m:'Bizeps',steps:['Stell dich mit Rücken, Po und Hinterkopf an eine Wand, Füße eine Fußlänge davor.','Hanteln im Untergriff, Arme gestreckt neben dem Körper.','Beug die Arme Richtung Schulter, die Ellbogen bleiben an der Wand. Langsam ablassen.'],tip:'Die Wand verhindert Schwung und Hohlkreuz. Löst sich dein Rücken, ist das Gewicht zu schwer.'},
+  {id:'ham',n:'Hammercurls an der Wand',fig:'wallham',s:3,r:'12',m:'Bizeps, Unterarme',steps:['Gleiche Position an der Wand wie bei den Curls.','Halte die Hanteln mit den Daumen nach vorne.','Beug die Arme abwechselnd oder gleichzeitig, kontrolliert hoch und runter.'],tip:'Rücken bleibt an der Wand. Ruhig ausatmen beim Hochbeugen.'}
+ ]},
+ {id:'b',kp:'hb-',emoji:'🗿',name:'Schultern & Trizeps',short:'Schultern',ex:[
+  {id:'push',n:'Liegestütze erhöht',fig:'pushup',s:4,r:'8–15',m:'Brust, Schultern, Trizeps, Rumpf',bw:true,steps:['Hände schulterbreit auf eine stabile Sofakante, einen Tisch oder die Fensterbank.','Geh mit den Füßen zurück, bis dein Körper eine gerade Linie bildet. Bauch und Po fest.','Senk die Brust zur Kante, Ellbogen schräg nach hinten. Dann wieder hochdrücken.'],tip:'Je höher die Ablage, desto leichter. Zu leicht geworden? Dann auf den Boden, erst auf den Knien. Die Hüfte hängt nie durch.'},
+  {id:'ohp',n:'Schulterdrücken auf dem Stuhl',fig:'chairohp',s:3,r:'10',m:'Schultern, Trizeps',steps:['Setz dich auf einen Stuhl mit Lehne, Rücken und Po ganz hinten.','Hanteln auf Schulterhöhe, Handflächen nach vorne.','Drück nach oben, bis die Arme fast gestreckt sind. Langsam zurück auf Schulterhöhe.'],tip:'Nicht im Stehen drücken. Die Lehne stützt, kein Hohlkreuz. Lieber etwas leichter.'},
+  {id:'lat',n:'Seitheben',fig:'dlat',s:3,r:'12–15',m:'Seitliche Schulter',steps:['Steh oder sitz aufrecht, Hanteln neben dem Körper.','Ellbogen leicht gebeugt, Bauch fest.','Heb die Arme seitlich bis Schulterhöhe. Langsam ablassen.'],tip:'Kein Schwung aus dem Rücken. Leichtes Gewicht, dafür sauber.'},
+  {id:'rfly',n:'Reverse Flys, abgestützt',fig:'rflysup',s:3,r:'12–15 pro Seite',m:'Hintere Schulter, oberer Rücken',steps:['Gleiche Position wie beim Rudern: eine Hand auf dem Tisch, Schrittstellung.','Die andere Hand hält eine leichte Hantel, der Arm hängt locker.','Heb den Arm mit leicht gebeugtem Ellbogen seitlich nach außen bis Schulterhöhe. Langsam zurück.'],tip:'Sehr leichtes Gewicht reicht. Der Oberkörper bleibt still, nur der Arm bewegt sich.'},
+  {id:'cpush',n:'Enge Liegestütze erhöht',fig:'pushup',s:3,r:'8–12',m:'Trizeps, Brust',bw:true,steps:['Wie die normalen erhöhten Liegestütze, aber Hände eng nebeneinander.','Körper gerade, Bauch fest.','Ellbogen beim Runtergehen eng am Körper lassen, dann hochdrücken.'],tip:'Das ist anstrengender als es aussieht. Lieber eine höhere Ablage nehmen und sauber bleiben.'},
+  {id:'skull',n:'Trizepsdrücken liegend',fig:'skull',s:3,r:'12',m:'Trizeps',steps:['Leg dich auf den Rücken, Knie angewinkelt.','Halte die Hanteln mit gestreckten Armen über der Brust.','Beug nur die Ellbogen und senk die Hanteln neben die Stirn. Dann wieder strecken.'],tip:'Die Oberarme bleiben senkrecht. Langsam und kontrolliert.'}
+ ]},
+ {id:'c',kp:'hc-',emoji:'🦵',name:'Beine & Oberkörper',short:'Beine',ex:[
+  {id:'sq',n:'Kniebeuge auf den Stuhl',fig:'chairsq',s:3,r:'12–15',m:'Oberschenkel, Po',steps:['Stell dich vor einen Stuhl, Füße schulterbreit. Ohne Gewicht oder mit einer Hantel senkrecht vor der Brust.','Schieb den Po nach hinten und setz dich langsam fast auf den Stuhl.','Kurz antippen, nicht absacken. Dann über die Fersen wieder aufstehen.'],tip:'Der Stuhl begrenzt die Tiefe, so bleibt dein Rücken gerade. Erst ohne Hantel, wenn 15 locker gehen, mit.'},
+  {id:'lunge',n:'Ausfallschritt rückwärts',fig:'revlunge',s:3,r:'10 pro Seite',m:'Oberschenkel, Po',steps:['Steh aufrecht, ohne Gewicht oder mit Hanteln seitlich in den Händen.','Mach einen großen Schritt nach hinten und senk das hintere Knie Richtung Boden.','Drück dich über die vordere Ferse zurück in den Stand. Seiten abwechseln.'],tip:'Oberkörper aufrecht lassen. Wackelig? Dann ohne Hanteln und mit einer Hand an der Wand.'},
+  {id:'wall',n:'Wandsitzen',fig:'wallsit',s:3,r:'30–45 Sek.',rr:'30–45s',m:'Oberschenkel',bw:true,steps:['Lehn dich mit dem ganzen Rücken an eine Wand, Füße etwa einen Schritt davor.','Rutsch langsam nach unten, bis die Knie etwa im rechten Winkel sind.','Halten, ruhig atmen, dann langsam wieder hochrutschen.'],tip:'Der Rücken bleibt flach an der Wand, das entlastet die Wirbelsäule. Zu hart? Nicht ganz so tief gehen.'},
+  {id:'br',n:'Glute Bridge mit Hantel',fig:'bridge',s:3,r:'12–15',m:'Po, hintere Oberschenkel',steps:['Leg dich auf den Rücken, Knie angewinkelt, die Hantel quer auf der Hüfte.','Spann Po und Bauch an.','Heb die Hüfte, bis Knie, Hüfte und Schultern eine Linie bilden. Kurz halten, langsam ablegen.'],tip:'Oben nicht ins Hohlkreuz drücken. Die Kraft kommt aus dem Po, nicht aus dem Rücken.'},
+  {id:'push',n:'Liegestütze erhöht',fig:'pushup',s:3,r:'10',m:'Brust, Schultern, Trizeps',bw:true,steps:['Hände schulterbreit auf Sofakante, Tisch oder Fensterbank.','Körper gerade wie ein Brett, Bauch fest.','Brust zur Kante senken und wieder hochdrücken.'],tip:'Die Hüfte hängt nie durch. Lieber höher abstützen und sauber bleiben.'},
+  {id:'row',n:'Einarmiges Rudern, abgestützt',fig:'dbrow',s:3,r:'10 pro Seite',m:'Rücken, Bizeps',steps:['Eine Hand auf Tisch oder Stuhllehne, Füße in Schrittstellung.','Rücken gerade, der Arm hängt unter der Schulter.','Zieh die Hantel zur Hüfte, langsam ablassen. Seite wechseln.'],tip:'Stützhand entlastet den unteren Rücken. Nicht mitdrehen.'},
+  {id:'bug',n:'Dead Bug',fig:'deadbug',s:2,r:'10 pro Seite',m:'Tiefe Bauchmuskeln',bw:true,steps:['Leg dich auf den Rücken. Arme Richtung Decke, Knie über der Hüfte im rechten Winkel.','Drück den unteren Rücken sanft in den Boden.','Streck einen Arm nach hinten und das gegenüberliegende Bein nach vorne. Zurück, dann Seite wechseln.'],tip:'Der untere Rücken bleibt flach am Boden. Langsam und kontrolliert.'}
+ ]}
+];
 
 const SEED={"history": [{"d": "2026-10-07", "day": "a", "sets": 20, "w": "2026-41"}], "last": {"a-0": 50, "a-1": 30, "a-3": 0}, "weights": {"a-0": 50, "a-1": 30, "a-3": 0}, "lvlMax": 1, "rest": 60, "day": "a", "updated": 1};
 /* ================= Winter Arc Gym v5 ================= */
-const APP_VERSION='5.2';
+const APP_VERSION='5.4';
 const QUIPS=['Bandscheibe entspannt. Lat beleidigt.','Dein T-Shirt hat gerade Angst bekommen.','Ein Gletscher weniger.','Bizeps hat Fragen. Keine Antworten.','Schulterbreite wird aktualisiert …','Der Winter nimmt das persönlich.','Sauber. Kein Schwung. Uhrwerk.','Türrahmen, mach dich gefasst.','Das Eis meldet Verluste.','Irgendwo hat ein Pinguin applaudiert.'];
 const REST_MSGS=['Atmen. Trinken. Nicht Instagram.','Kurz durchschnaufen.','Der nächste Satz wartet schon.','Muskeln laden nach …','Pause ist auch Training.','Schluck Wasser? Nur so ein Gedanke.'];
 const FIN=[['🔥','Eis geschmolzen','Der Winter überlegt ernsthaft, dieses Jahr auszufallen.'],['🧊','Erledigt','Irgendwo weint ein Gletscher. Er wusste, dass du kommst.'],['🦍','Training erledigt','Rücken geschont, Ego gefüttert. Perfekte Bilanz.'],['🏔️','Gipfel erreicht','Ganz ohne Kreuzheben. Deine Physio wäre stolz.'],['🐧','Pinguine salutieren','Du hast heute mehr gezogen als ein Schlittenhund.']];
 const LEVELS=[[0,'🧊','Eiswürfel'],[150,'❄️','Schneeflocke'],[450,'⛄','Schneemann'],[900,'🐻‍❄️','Eisbär'],[1500,'🦍','Yeti'],[2250,'🏔️','Lawine'],[3150,'👑','Winterkönig'],[4200,'🔥','Gletscherbrecher']];
 const FACES=[{v:1,e:'😌',t:'Super',c:'var(--c-c)'},{v:3,e:'🙂',t:'Gut',c:'var(--c-c)'},{v:5,e:'😐',t:'Geht so',c:'#E9A92B'},{v:7,e:'😣',t:'Schlecht',c:'var(--ember)'},{v:9,e:'😖',t:'Übel',c:'#E5484D'}];
 const DCOL={a:'var(--c-a)',b:'var(--c-b)',c:'var(--c-c)'};
-DAYS.forEach(d=>d.ex.forEach(e=>{const m=String(e.r).match(/\d+(–\d+)?/);e.rr=m?m[0]:e.r;}));
+const ALLDAYS=[...DAYS,...HOME];
+ALLDAYS.forEach(d=>d.ex.forEach(e=>{if(!e.rr){const m=String(e.r).match(/\d+(–\d+)?/);e.rr=m?m[0]:e.r;}}));
 const KEY='winterarc-gym-v2';
 const STANDALONE=!(window.claude&&typeof window.claude.use==='function');
 
-const def=()=>({weights:{},last:{},checks:{},warm:{},history:[],rest:90,day:'a',lvlMax:0,goal:3,theme:'auto',session:null,health:{back:{},water:{},sleep:{},bw:[]},updated:0});
+const def=()=>({weights:{},last:{},checks:{},warm:{},history:[],rest:90,day:'a',lvlMax:0,goal:3,theme:'auto',mode:'gym',session:null,health:{back:{},water:{},sleep:{},bw:[]},updated:0});
 function sanitize(o){
   const s=Object.assign(def(),o&&typeof o==='object'?o:{});
   ['weights','last','checks','warm'].forEach(k=>{if(!s[k]||typeof s[k]!=='object'||Array.isArray(s[k]))s[k]={};});
@@ -861,6 +972,7 @@ function sanitize(o){
   if(![60,90,120].includes(s.rest))s.rest=90;
   if(![2,3,4].includes(s.goal))s.goal=3;
   if(!['auto','light','dark'].includes(s.theme))s.theme='auto';
+  if(!['gym','home'].includes(s.mode))s.mode='gym';
   if(!DAYS.some(d=>d.id===s.day))s.day='a';
   if(typeof s.lvlMax!=='number')s.lvlMax=0;
   if(!s.session||typeof s.session!=='object'||typeof s.session.start!=='number')s.session=null;
@@ -911,12 +1023,13 @@ const thisWeek=()=>weekKey(new Date());
 const weekEntries=wk=>S.history.filter(h=>h.w===wk);
 const weekCount=wk=>weekEntries(wk).length;
 function streak(){let n=0;const d=new Date();if(weekCount(weekKey(d))<S.goal)d.setDate(d.getDate()-7);for(let i=0;i<520;i++){if(weekCount(weekKey(d))>=S.goal){n++;d.setDate(d.getDate()-7);}else break;}return n;}
-const day=()=>DAYS.find(d=>d.id===S.day)||DAYS[0];
-const exKey=(d,i)=>d.id+'-'+i;
+const plan=()=>S.mode==='home'?HOME:DAYS;
+const day=()=>plan().find(d=>d.id===S.day)||plan()[0];
+const exKey=(d,i)=>{const e=d.ex[i];return e&&e.id?(d.kp||d.id+'-')+e.id:(d.kp||d.id+'-')+i;};
 function checks(d,i){const k=exKey(d,i),s=d.ex[i].s;let a=S.checks[k];if(!Array.isArray(a)||a.length!==s){a=Array(s).fill(false);S.checks[k]=a;}return a;}
 function warmOf(d){let a=S.warm[d.id];if(!Array.isArray(a)){a=[];S.warm[d.id]=a;}return a;}
 function progress(d){let t=0,c=0;d.ex.forEach((e,i)=>{const a=checks(d,i);t+=a.length;c+=a.filter(Boolean).length;});return{t,c,p:t?Math.round(c/t*100):0};}
-const anyProgress=()=>DAYS.some(d=>progress(d).c>0);
+const anyProgress=()=>ALLDAYS.some(d=>progress(d).c>0);
 const fmt=n=>(Math.round(n*100)/100).toString().replace('.',',');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function buzz(p){try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}}
@@ -945,7 +1058,7 @@ function liquidMove(ind,from,to,unit){
   ind.style.transform=tf(to);
 }
 /* ---------- XP / level ---------- */
-function xp(){let x=0;S.history.forEach(h=>{x+=(+h.sets||0)*10+50;});DAYS.forEach(d=>{x+=progress(d).c*10;});return x;}
+function xp(){let x=0;S.history.forEach(h=>{x+=(+h.sets||0)*10+50;});ALLDAYS.forEach(d=>{x+=progress(d).c*10;});return x;}
 function levelOf(x){let i=0;for(let k=0;k<LEVELS.length;k++)if(x>=LEVELS[k][0])i=k;return i;}
 function renderLevel(check){
   const x=xp(),i=levelOf(x),L=LEVELS[i],N=LEVELS[i+1];
@@ -978,7 +1091,7 @@ function renderBanner(){
 }
 function renderHero(){
   const d=day(),p=progress(d).p,due=nextDayId()===d.id&&!S.history.some(h=>h.d===today());
-  $('#daySub').textContent='Tag '+(DAYS.indexOf(d)+1)+' von 3';
+  $('#daySub').textContent='Tag '+(plan().indexOf(d)+1)+' von 3'+(S.mode==='home'?' · Zuhause':'');
   $('#dueChip').innerHTML=due?'<span class="duepill">Heute dran</span>':'';
   const parts=d.name.split(' & ');
   $('#dayTitle').innerHTML=`<span>${esc(parts[0])}</span><span class="h2b">${parts[1]?'&amp; '+esc(parts[1]):''}</span>`;
@@ -988,23 +1101,24 @@ function renderHero(){
 }
 function renderSession(){
   const el=$('#sessionChip');
-  if(S.session&&S.session.day===S.day){const m=Math.floor((Date.now()-S.session.start)/60000);el.innerHTML=`<span class="sessionChip"><i></i>${m<1?'Läuft gerade':m+' Min'}</span>`;}
+  if(S.session&&S.session.day===S.day&&(S.session.mode||'gym')===S.mode){const m=Math.floor((Date.now()-S.session.start)/60000);el.innerHTML=`<span class="sessionChip"><i></i>${m<1?'Läuft gerade':m+' Min'}</span>`;}
   else el.innerHTML='';
 }
 setInterval(()=>{if(!$('#vTrain').hidden)renderSession();},15000);
 function renderSeg(){
   const seg=$('#seg');
   if(!seg.querySelector('.ind'))seg.innerHTML='<span class="ind" aria-hidden="true"></span>'+DAYS.map(d=>`<button role="tab" data-day="${d.id}"><span class="lt">${esc(d.short)}</span><span class="mini" aria-hidden="true"></span></button>`).join('');
-  const ci=DAYS.indexOf(day()),pi=seg.dataset.i!=null?+seg.dataset.i:null;
+  const ci=plan().indexOf(day()),pi=seg.dataset.i!=null?+seg.dataset.i:null;
   liquidMove(seg.querySelector('.ind'),pi,ci,'(100% + 4px)');seg.dataset.i=ci;seg.style.setProperty('--segc',DCOL[day().id]);
   const nd=S.history.some(h=>h.d===today())?null:nextDayId();
-  DAYS.forEach(d=>{
+  plan().forEach(d=>{
     const b=seg.querySelector(`[data-day="${d.id}"]`),pr=progress(d);
     b.setAttribute('aria-selected',String(d.id===S.day));
     b.querySelector('.mini').className='mini '+(pr.c===0?'':pr.c===pr.t?'full':'half');
     let due=b.querySelector('.due');if(d.id===nd&&d.id!==S.day){if(!due){due=document.createElement('span');due.className='due';b.appendChild(due);}}else if(due)due.remove();
   });
 }
+function renderMode(){const m=$('#modeSw');if(m)m.setAttribute('aria-checked',String(S.mode==='home'));}
 function renderWarm(){const a=warmOf(day());$('#warm').innerHTML=WARM.map((w,i)=>`<button class="chip glass ${a[i]?'on':''}" data-warm="${i}" aria-pressed="${!!a[i]}"><span class="ck">✓</span>${esc(w.n)}</button>`).join('');}
 const WAVE='<svg class="wv" viewBox="0 0 200 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 5 Q12.5 0 25 5 T50 5 T75 5 T100 5 T125 5 T150 5 T175 5 T200 5 V10 H0Z"/></svg>';
 const CHECK='<span class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>';
@@ -1083,7 +1197,7 @@ function renderCal(dir){
 function calInfo(k){
   const l=byDate()[k]||[],t=today();
   let date=k;try{date=new Date(k+'T12:00:00').toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});}catch(e){}
-  let h=l.length?`<b>${esc(date)}:</b> ${l.map(x=>esc((DAYS.find(d=>d.id===x.day)||DAYS[0]).name)+(x.dur?' ('+x.dur+' Min)':'')).join(', ')}`:(k>t?`<b>${esc(date)}:</b> Liegt noch in der Zukunft. Alles offen.`:k===t?`<b>Heute:</b> Noch kein Training. Das Eis wartet.`:`<b>${esc(date)}:</b> Ruhetag. Auch Yetis schlafen.`);
+  let h=l.length?`<b>${esc(date)}:</b> ${l.map(x=>esc((DAYS.find(d=>d.id===x.day)||DAYS[0]).name)+(x.mode==='home'?' (Zuhause'+(x.dur?', '+x.dur+' Min':'')+')':(x.dur?' ('+x.dur+' Min)':''))).join(', ')}`:(k>t?`<b>${esc(date)}:</b> Liegt noch in der Zukunft. Alles offen.`:k===t?`<b>Heute:</b> Noch kein Training. Das Eis wartet.`:`<b>${esc(date)}:</b> Ruhetag. Auch Yetis schlafen.`);
   const bw=S.health.bw.find(x=>x.d===k);
   if(k<=t)h+=`<div class="calW"><span>Gewicht</span><input data-calw="${k}" inputmode="decimal" placeholder="kg" value="${bw?fmt(bw.kg):''}" aria-label="Gewicht am ${esc(date)}"><button class="pbtn" data-calwsave="${k}">${bw?'Ändern':'Speichern'}</button></div>`;
   else if(bw)h+=`<div class="calW"><span>Gewicht: <b>${fmt(bw.kg)} kg</b></span></div>`;
@@ -1096,12 +1210,12 @@ function sparkPath(vals,w,h){
 }
 function renderLifts(){
   const rows=[];
-  DAYS.forEach(d=>d.ex.forEach((e,i)=>{
+  ALLDAYS.forEach(d=>d.ex.forEach((e,i)=>{
     if(e.bw)return;const k=exKey(d,i);
     const pts=S.history.filter(h=>h.ex&&h.ex[k]&&h.ex[k][0]>0).sort((x,y)=>x.d.localeCompare(y.d)).map(h=>h.ex[k][0]);
     if(!pts.length)return;
     const last=pts[pts.length-1],firstV=pts[0],diff=last-firstV;
-    rows.push(`<div class="lift"><div class="nm">${esc(e.n)}<small>${pts.length} ${pts.length===1?'Einheit':'Einheiten'}</small></div><svg viewBox="0 0 84 30"><path class="spark" pathLength="1" d="${pts.length>1?sparkPath(pts.slice(-10),84,30):'M38 15L46 15'}" style="stroke:${DCOL[d.id]}"/></svg><div class="val">${fmt(last)} kg<small class="${diff>0?'up':diff<0?'down':''}">${diff>0?'+'+fmt(diff):diff<0?fmt(diff):'±0'}</small></div></div>`);
+    rows.push(`<div class="lift"><div class="nm">${esc(e.n)}<small>${d.kp?'Zuhause, ':''}${pts.length} ${pts.length===1?'Einheit':'Einheiten'}</small></div><svg viewBox="0 0 84 30"><path class="spark" pathLength="1" d="${pts.length>1?sparkPath(pts.slice(-10),84,30):'M38 15L46 15'}" style="stroke:${DCOL[d.id]}"/></svg><div class="val">${fmt(last)} kg<small class="${diff>0?'up':diff<0?'down':''}">${diff>0?'+'+fmt(diff):diff<0?fmt(diff):'±0'}</small></div></div>`);
   }));
   $('#lifts').innerHTML=rows.length?rows.join(''):'<div class="empty"><span class="e">📈</span>Schließ ein Training mit Gewichten ab, dann wächst hier deine Kraftkurve.</div>';
 }
@@ -1111,7 +1225,7 @@ function renderHistList(){
   $('#hist').innerHTML='<div class="list glass">'+items.map(({h,idx})=>{
     const d=DAYS.find(x=>x.id===h.day)||DAYS[0];let date=h.d;
     try{date=new Date(h.d+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'});}catch(e){}
-    return `<div class="item"><span class="em" style="background:${DCOL[d.id]}"></span><div class="t"><b>${esc(d.name)}</b><small>${esc(date)}${h.sets!=null?', '+h.sets+' Sätze':''}${h.dur?', '+h.dur+' Min':''}</small></div><button data-del="${idx}">Entfernen</button></div>`;
+    return `<div class="item"><span class="em" style="background:${DCOL[d.id]}"></span><div class="t"><b>${esc(d.name)}</b><small>${esc(date)}${h.mode==='home'?', Zuhause':''}${h.sets!=null?', '+h.sets+' Sätze':''}${h.dur?', '+h.dur+' Min':''}</small></div><button data-del="${idx}">Entfernen</button></div>`;
   }).join('')+'</div>';
 }
 
@@ -1196,7 +1310,7 @@ function showBwInfo(i){
 })();
 addEventListener('resize',()=>{if(!$('#vBody').hidden)renderBW();});
 function saveBw(k,v){S.health.bw=S.health.bw.filter(x=>x.d!==k);S.health.bw.push({d:k,kg:Math.round(v*10)/10});bwSel=k;save();}
-function render(){applyTheme();renderWeek();renderLevel(false);renderBanner();renderHero();renderSeg();renderWarm();renderEx();renderFinish();if(!$('#vProg').hidden)renderProg();if(!$('#vBody').hidden)renderBody();}
+function render(){applyTheme();renderMode();renderWeek();renderLevel(false);renderBanner();renderHero();renderSeg();renderWarm();renderEx();renderFinish();if(!$('#vProg').hidden)renderProg();if(!$('#vBody').hidden)renderBody();}
 function refreshProgress(){renderHero();renderSeg();renderFinish();renderLevel(true);}
 
 /* ---------- figure loop ---------- */
@@ -1419,8 +1533,18 @@ document.addEventListener('click',e=>{
   if(t.dataset.bwr){bwRange=t.dataset.bwr;bwSel=null;renderBW();return;}
   if(t.dataset.bwdel){const k=t.dataset.bwdel;if(!t.classList.contains('sure')){t.classList.add('sure');t.textContent='Sicher?';setTimeout(()=>{if(t.isConnected){t.classList.remove('sure');t.textContent='Löschen';}},3000);return;}
     const gone=S.health.bw.find(x=>x.d===k);S.health.bw=S.health.bw.filter(x=>x.d!==k);bwSel=null;save();renderBW();toast('Eintrag gelöscht.','Rückgängig',()=>{S.health.bw.push(gone);save();renderBW();});return;}
-  if(t.dataset.day){if(t.dataset.day===S.day)return;const dir=DAYS.findIndex(x=>x.id===t.dataset.day)>DAYS.indexOf(d)?1:-1;S.day=t.dataset.day;save();hideRest();renderHero();renderSeg();renderWarm();renderEx();renderFinish();
-    if(!reduce){[...document.querySelectorAll('#exList .ex')].forEach((el,i)=>el.animate([{opacity:0,transform:`translateX(${dir*30}px) scale(.98)`},{opacity:1,transform:'none'}],{duration:560,delay:i*40,easing:EASE_SMOOTH,fill:'backwards'}));$('#dayTitle').animate([{opacity:0},{opacity:1}],{duration:320,easing:'ease-out'});}
+  if(t.id==='modeSw'){
+    S.mode=S.mode==='home'?'gym':'home';save();hideRest();
+    t.setAttribute('aria-checked',String(S.mode==='home'));buzz(15);
+    const list=$('#exList');
+    const swap=()=>{renderHero();renderSeg();renderEx();renderFinish();renderLevel(false);
+      if(!reduce)[...list.querySelectorAll('.ex')].forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(12px) scale(.985)'},{opacity:1,transform:'none'}],{duration:520,delay:i*45,easing:EASE_SMOOTH,fill:'backwards'}));};
+    if(reduce)swap();else list.animate([{opacity:1},{opacity:0}],{duration:160,easing:'ease-in',fill:'forwards'}).onfinish=a=>{swap();list.getAnimations().forEach(x=>x.cancel());};
+    toast(S.mode==='home'?'Zuhause-Modus: nur Kurzhanteln 🏠':'Zurück im Gym 🏋️');
+    return;
+  }
+  if(t.dataset.day){if(t.dataset.day===S.day)return;const dir=plan().findIndex(x=>x.id===t.dataset.day)>plan().indexOf(d)?1:-1;S.day=t.dataset.day;save();hideRest();renderHero();renderSeg();renderWarm();renderEx();renderFinish();
+    if(!reduce){[...document.querySelectorAll('#exList .ex')].forEach((el,i)=>el.animate([{opacity:0,transform:`translateX(${dir*14}px)`},{opacity:1,transform:'none'}],{duration:480,delay:i*35,easing:EASE_SMOOTH,fill:'backwards'}));$('#dayTitle').animate([{opacity:0},{opacity:1}],{duration:320,easing:'ease-out'});}
     return;}
   if(t.dataset.how!=null){const card=t.closest('.ex');openSheet(d.ex,+t.dataset.how,card?card.querySelector('.thumb'):t,t);return;}
   if(t.id==='warmHow'){openSheet(WARM.filter(w=>w.fig),0,null,t);return;}
@@ -1429,7 +1553,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.set){
     const [i,j]=t.dataset.set.split('-').map(Number),a=checks(d,i);
     a[j]=!a[j];
-    if(a[j]&&(!S.session||S.session.day!==d.id))S.session={start:Date.now(),day:d.id};
+    if(a[j]&&(!S.session||S.session.day!==d.id||(S.session.mode||'gym')!==S.mode))S.session={start:Date.now(),day:d.id,mode:S.mode};
     if(!anyChecked(d)&&S.session&&S.session.day===d.id)S.session=null;
     save();
     t.classList.toggle('on',a[j]);t.setAttribute('aria-pressed',String(a[j]));t.classList.remove('just');
@@ -1463,8 +1587,8 @@ document.addEventListener('click',e=>{
     const prevMax={};S.history.forEach(h=>{if(h.ex)for(const k in h.ex){prevMax[k]=Math.max(prevMax[k]||0,+h.ex[k][0]||0);}});
     const ex={};let prs=0;
     d.ex.forEach((e,i)=>{const k=exKey(d,i),done=checks(d,i).filter(Boolean).length,w=e.bw?0:(S.weights[k]||0);if(done>0){ex[k]=[w,done];if(w>0&&prevMax[k]>0&&w>prevMax[k])prs++;}});
-    let dur=null;if(S.session&&S.session.day===d.id){dur=Math.round((Date.now()-S.session.start)/60000);if(dur<1||dur>240)dur=null;}
-    S.history.push({w:thisWeek(),d:today(),day:d.id,sets:pr.c,dur,ex});
+    let dur=null;if(S.session&&S.session.day===d.id&&(S.session.mode||'gym')===S.mode){dur=Math.round((Date.now()-S.session.start)/60000);if(dur<1||dur>240)dur=null;}
+    S.history.push({w:thisWeek(),d:today(),day:d.id,sets:pr.c,dur,ex,mode:S.mode});
     d.ex.forEach((e,i)=>{const k=exKey(d,i);if(S.weights[k]!=null)S.last[k]=S.weights[k];S.checks[k]=Array(e.s).fill(false);});
     S.warm[d.id]=[];S.session=null;
     const before=levelOf(xp()-50);save();hideRest();releaseAwake();
